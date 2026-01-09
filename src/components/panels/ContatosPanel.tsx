@@ -6,6 +6,7 @@ import { ChartContainer } from "@/components/dashboard/ChartContainer";
 import { FilterBar } from "@/components/dashboard/FilterBar";
 import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
+import { CustomTooltip, PieTooltip } from "@/components/dashboard/CustomTooltip";
 import {
   BarChart,
   Bar,
@@ -37,15 +38,16 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
     company: "Todos",
   });
 
-  // Initialize date filters
+  // Initialize date filters with today's date as default
   useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
     const savedStart = localStorage.getItem("filtro_data_inicio_contato");
     const savedEnd = localStorage.getItem("filtro_data_fim_contato");
     const savedCompany = localStorage.getItem("filtro_empresa_contato");
     
     setFilters({
-      dateStart: savedStart || "",
-      dateEnd: savedEnd || "",
+      dateStart: savedStart || today,
+      dateEnd: savedEnd || today,
       company: savedCompany || "Todos",
     });
   }, []);
@@ -255,13 +257,7 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
                 tick={{ fontSize: 11 }}
                 width={100}
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<CustomTooltip valueLabel="Contatos" />} />
               <Bar dataKey="value" fill="url(#colorGradient)" radius={[0, 4, 4, 0]}>
                 <defs>
                   <linearGradient id="colorGradient" x1="0" y1="0" x2="1" y2="0">
@@ -284,13 +280,7 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
               <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<CustomTooltip valueLabel="Contatos" />} />
               <Line
                 type="monotone"
                 dataKey="value"
@@ -329,13 +319,7 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<PieTooltip valueLabel="Contatos" />} />
             </PieChart>
           </ResponsiveContainer>
         </ChartContainer>
@@ -361,13 +345,7 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<PieTooltip valueLabel="Contatos" />} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>

@@ -145,7 +145,7 @@ export function useGoogleSheets() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchSheetData(SPREADSHEET_ID_LIGACOES, "Propostas");
+      const data = await fetchSheetData(SPREADSHEET_ID_CONTATOS, "Propostas", API_KEY_CONTATOS);
       const now = new Date().toLocaleString("pt-BR", {
         day: "2-digit",
         month: "2-digit",

@@ -6,6 +6,7 @@ import { ChartContainer } from "@/components/dashboard/ChartContainer";
 import { FilterBar } from "@/components/dashboard/FilterBar";
 import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
+import { CustomTooltip, PieTooltip } from "@/components/dashboard/CustomTooltip";
 import {
   BarChart,
   Bar,
@@ -34,12 +35,15 @@ interface PropostasPanelProps {
 export function PropostasPanel({ isActive }: PropostasPanelProps) {
   const { isLoading, error, fetchPropostas, parseDate, normalizeText } = useGoogleSheets();
   const [data, setData] = useState<SheetData | null>(null);
-  const [filters, setFilters] = useState({
-    dateStart: "",
-    dateEnd: "",
-    company: "Todos",
-    seller: "",
-    product: "",
+  const [filters, setFilters] = useState(() => {
+    const today = new Date().toISOString().split("T")[0];
+    return {
+      dateStart: today,
+      dateEnd: today,
+      company: "Todos",
+      seller: "",
+      product: "",
+    };
   });
 
   // Load data when panel becomes active
@@ -298,13 +302,7 @@ export function PropostasPanel({ isActive }: PropostasPanelProps) {
                 <Cell fill={STATUS_COLORS.perdidas} />
                 <Cell fill={STATUS_COLORS.abertas} />
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<PieTooltip valueLabel="Propostas" />} />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -326,13 +324,7 @@ export function PropostasPanel({ isActive }: PropostasPanelProps) {
                 height={80}
               />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<CustomTooltip valueLabel="Propostas" />} />
               <Bar dataKey="value" fill="hsl(217, 71%, 45%)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -363,13 +355,7 @@ export function PropostasPanel({ isActive }: PropostasPanelProps) {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<PieTooltip valueLabel="Perdas" />} />
             </PieChart>
           </ResponsiveContainer>
         </ChartContainer>
