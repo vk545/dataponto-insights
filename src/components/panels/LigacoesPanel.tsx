@@ -6,6 +6,7 @@ import { ChartContainer } from "@/components/dashboard/ChartContainer";
 import { FilterBar } from "@/components/dashboard/FilterBar";
 import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
+import { CustomTooltip, PieTooltip } from "@/components/dashboard/CustomTooltip";
 import {
   BarChart,
   Bar,
@@ -30,25 +31,27 @@ interface LigacoesPanelProps {
 export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
   const { isLoading, error, fetchLigacoes, parseDate, normalizeText } = useGoogleSheets();
   const [data, setData] = useState<SheetData | null>(null);
-  const [filters, setFilters] = useState({
-    dateStart: "2025-07-01",
-    dateEnd: "2025-07-31",
-    company: "Todos",
-    collaborator: "Todos",
+  const [filters, setFilters] = useState(() => {
+    const today = new Date().toISOString().split("T")[0];
+    return {
+      dateStart: today,
+      dateEnd: today,
+      company: "Todos",
+      collaborator: "Todos",
+    };
   });
 
-  // Load saved filters
+  // Load saved filters or use today
   useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
     const savedStart = localStorage.getItem("filtro_data_inicio");
     const savedEnd = localStorage.getItem("filtro_data_fim");
     
-    if (savedStart && savedEnd) {
-      setFilters((prev) => ({
-        ...prev,
-        dateStart: savedStart,
-        dateEnd: savedEnd,
-      }));
-    }
+    setFilters((prev) => ({
+      ...prev,
+      dateStart: savedStart || today,
+      dateEnd: savedEnd || today,
+    }));
   }, []);
 
   // Load data when panel becomes active
@@ -268,13 +271,7 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
                 height={80}
               />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<CustomTooltip valueLabel="Ligações" />} />
               <Bar dataKey="value" fill="url(#barGradient)" radius={[4, 4, 0, 0]}>
                 <defs>
                   <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
@@ -308,13 +305,7 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<PieTooltip valueLabel="Ligações" />} />
             </PieChart>
           </ResponsiveContainer>
         </ChartContainer>
@@ -332,13 +323,7 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
               <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
               <XAxis dataKey="date" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<CustomTooltip valueLabel="Ligações" />} />
               <Line
                 type="monotone"
                 dataKey="value"
@@ -366,13 +351,7 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
                 tick={{ fontSize: 10 }}
                 width={100}
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
+              <Tooltip content={<CustomTooltip valueLabel="Ligações" />} />
               <Bar dataKey="value" fill="hsl(217, 71%, 45%)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
