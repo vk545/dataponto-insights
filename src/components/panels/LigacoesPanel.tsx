@@ -20,6 +20,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LabelList,
 } from "recharts";
 
 const COLORS = ["#14b8a6", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6", "#10b981", "#06b6d4", "#f43f5e"];
@@ -278,7 +279,9 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
               />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip content={<CustomTooltip valueLabel="Ligações" />} />
-              <Bar dataKey="value" fill="url(#barGradientLigacoes)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill="url(#barGradientLigacoes)" radius={[4, 4, 0, 0]}>
+                <LabelList dataKey="value" position="top" fill="hsl(var(--foreground))" fontSize={11} fontWeight={600} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
@@ -357,7 +360,9 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
                 width={100}
               />
               <Tooltip content={<CustomTooltip valueLabel="Ligações" />} />
-              <Bar dataKey="value" fill="url(#barGradientEmpresa)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="value" fill="url(#barGradientEmpresa)" radius={[0, 4, 4, 0]}>
+                <LabelList dataKey="value" position="right" fill="hsl(var(--foreground))" fontSize={12} fontWeight={600} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
