@@ -21,7 +21,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  LabelList,
 } from "recharts";
+import { ArrowRight } from "lucide-react";
 
 const COLORS = ["#14b8a6", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6", "#10b981", "#06b6d4", "#f43f5e"];
 
@@ -240,6 +242,80 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
         isLoading={isLoading}
       />
 
+      {/* Indicador x Vendedor - Always Visible at Top */}
+      <div className="rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-background to-accent/5 p-6 shadow-lg">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-white shadow-md">
+            <ArrowRight className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground">
+              Fluxo de Indicações
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Quem indicou contatos para quem
+            </p>
+          </div>
+        </div>
+
+        {processedData.indicadorVendedor.length > 0 ? (
+          <div className="overflow-x-auto rounded-lg border border-border bg-card/50">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gradient-to-r from-primary/10 to-accent/10">
+                  <th className="px-4 py-3 text-left font-bold text-foreground border-b border-border">
+                    🧑‍💼 Vendedor
+                  </th>
+                  {processedData.indicadores.map((indicador) => (
+                    <th key={indicador} className="px-4 py-3 text-center font-semibold text-foreground border-b border-border">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground">de</span>
+                        {indicador}
+                      </span>
+                    </th>
+                  ))}
+                  <th className="px-4 py-3 text-center font-bold text-primary border-b border-border bg-primary/10">
+                    📊 Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {processedData.indicadorVendedor.map((row, index) => (
+                  <tr 
+                    key={row.vendedor} 
+                    className={`transition-colors hover:bg-primary/5 ${index % 2 === 0 ? 'bg-muted/20' : 'bg-transparent'}`}
+                  >
+                    <td className="px-4 py-3 font-semibold text-foreground border-b border-border/50">
+                      {row.vendedor}
+                    </td>
+                    {processedData.indicadores.map((indicador) => (
+                      <td key={indicador} className="px-4 py-3 text-center border-b border-border/50">
+                        {row.indicadores[indicador] ? (
+                          <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-gradient-to-r from-primary/20 to-accent/20 px-2 font-bold text-foreground">
+                            {row.indicadores[indicador]}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground/50">-</span>
+                        )}
+                      </td>
+                    ))}
+                    <td className="px-4 py-3 text-center border-b border-border/50 bg-primary/5">
+                      <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg bg-gradient-to-r from-primary to-accent px-3 font-bold text-white shadow-sm">
+                        {row.total}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <ArrowRight className="mb-2 h-8 w-8 opacity-50" />
+            <p className="text-sm">Nenhuma indicação no período selecionado</p>
+          </div>
+        )}
+
       {/* Metric Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
@@ -293,7 +369,9 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
                 width={100}
               />
               <Tooltip content={<CustomTooltip valueLabel="Contatos" />} />
-              <Bar dataKey="value" fill="url(#colorGradientContatos)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="value" fill="url(#colorGradientContatos)" radius={[0, 4, 4, 0]}>
+                <LabelList dataKey="value" position="right" fill="hsl(var(--foreground))" fontSize={12} fontWeight={600} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
@@ -380,46 +458,7 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
         </ChartContainer>
       </div>
 
-      {/* Indicador x Vendedor Table */}
-      {processedData.indicadorVendedor.length > 0 && (
-        <ChartContainer
-          title="📋 Contatos por Indicador x Vendedor"
-          isLoading={isLoading}
-          isEmpty={processedData.indicadorVendedor.length === 0}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-4 py-3 text-left font-semibold text-foreground">Vendedor</th>
-                  {processedData.indicadores.map((indicador) => (
-                    <th key={indicador} className="px-4 py-3 text-center font-semibold text-foreground">
-                      {indicador}
-                    </th>
-                  ))}
-                  <th className="px-4 py-3 text-center font-semibold text-foreground">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {processedData.indicadorVendedor.map((row, index) => (
-                  <tr 
-                    key={row.vendedor} 
-                    className={`border-b border-border/50 ${index % 2 === 0 ? 'bg-muted/30' : ''}`}
-                  >
-                    <td className="px-4 py-3 font-medium text-foreground">{row.vendedor}</td>
-                    {processedData.indicadores.map((indicador) => (
-                      <td key={indicador} className="px-4 py-3 text-center text-muted-foreground">
-                        {row.indicadores[indicador] || 0}
-                      </td>
-                    ))}
-                    <td className="px-4 py-3 text-center font-bold text-foreground">{row.total}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </ChartContainer>
-      )}
+      </div>
     </div>
   );
 }
