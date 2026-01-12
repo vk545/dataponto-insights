@@ -9,8 +9,8 @@ import {
 import logoImage from "@/assets/dataponto-logo.png";
 
 interface HeaderProps {
-  activePanel: "contatos" | "ligacoes" | "propostas";
-  onPanelChange: (panel: "contatos" | "ligacoes" | "propostas") => void;
+  activePanel: "contatos" | "ligacoes";
+  onPanelChange: (panel: "contatos" | "ligacoes") => void;
   onRefresh: () => void;
   isLoading: boolean;
   isDark: boolean;
@@ -28,7 +28,6 @@ export function Header({
   const panelLabels = {
     contatos: { icon: "📇", label: "Contatos" },
     ligacoes: { icon: "📞", label: "Ligações" },
-    propostas: { icon: "📑", label: "Propostas" },
   };
 
   return (

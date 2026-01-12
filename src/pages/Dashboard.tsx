@@ -2,15 +2,14 @@ import { useState, useEffect } from "react";
 import { Header } from "@/components/dashboard/Header";
 import { ContatosPanel } from "@/components/panels/ContatosPanel";
 import { LigacoesPanel } from "@/components/panels/LigacoesPanel";
-import { PropostasPanel } from "@/components/panels/PropostasPanel";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 
-type PanelType = "contatos" | "ligacoes" | "propostas";
+type PanelType = "contatos" | "ligacoes";
 
 export default function Dashboard() {
   const [activePanel, setActivePanel] = useState<PanelType>("contatos");
   const [isDark, setIsDark] = useState(false);
-  const { isLoading, lastUpdated, fetchContatos, fetchLigacoes, fetchPropostas } = useGoogleSheets();
+  const { isLoading, lastUpdated, fetchContatos, fetchLigacoes } = useGoogleSheets();
 
   // Check for system dark mode preference
   useEffect(() => {
@@ -34,16 +33,12 @@ export default function Dashboard() {
       case "ligacoes":
         fetchLigacoes();
         break;
-      case "propostas":
-        fetchPropostas();
-        break;
     }
   };
 
   const panelTitles = {
     contatos: "📇 Painel de Contatos",
     ligacoes: "📞 Painel de Ligações",
-    propostas: "📑 Painel de Propostas",
   };
 
   return (
@@ -73,7 +68,6 @@ export default function Dashboard() {
         {/* Panel Content */}
         <ContatosPanel isActive={activePanel === "contatos"} />
         <LigacoesPanel isActive={activePanel === "ligacoes"} />
-        <PropostasPanel isActive={activePanel === "propostas"} />
       </main>
 
       {/* Footer */}
