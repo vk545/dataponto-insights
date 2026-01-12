@@ -86,6 +86,8 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
         byPlataforma: [],
         byDay: [],
         companies: [],
+        indicadorVendedor: [] as { vendedor: string; indicadores: Record<string, number>; total: number }[],
+        indicadores: [] as string[],
       };
     }
 
@@ -97,6 +99,7 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
     const idxVendedor = headers.findIndex((h) => h.trim().toLowerCase() === "vendedor");
     const idxProduto = headers.findIndex((h) => h.trim().toLowerCase() === "produto");
     const idxPlataforma = headers.findIndex((h) => h.trim().toLowerCase() === "plataforma");
+    const idxIndicador = headers.findIndex((h) => h.trim().toLowerCase() === "indicador");
 
     // Extract companies for filter
     const companiesMap = new Map<string, string>();
@@ -135,11 +138,16 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
     const produtoCount: Record<string, number> = {};
     const plataformaCount: Record<string, number> = {};
     const dayCount: Record<string, number> = {};
+    
+    // Count indicador -> vendedor relationship
+    const indicadorVendedorMap: Record<string, Record<string, number>> = {};
+    const indicadoresSet = new Set<string>();
 
     filteredRows.forEach((row) => {
       const vendedor = row[headers[idxVendedor]]?.trim() || "Sem vendedor";
       const produto = row[headers[idxProduto]]?.trim() || "Sem produto";
       const plataforma = row[headers[idxPlataforma]]?.trim() || "Sem plataforma";
+      const indicador = row[headers[idxIndicador]]?.trim() || "";
       const dataStr = row[headers[idxData]];
       const dataFormatada = parseDate(dataStr);
 
@@ -147,7 +155,26 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
       produtoCount[produto] = (produtoCount[produto] || 0) + 1;
       if (plataforma) plataformaCount[plataforma] = (plataformaCount[plataforma] || 0) + 1;
       if (dataFormatada) dayCount[dataFormatada] = (dayCount[dataFormatada] || 0) + 1;
+      
+      // Track indicador -> vendedor
+      if (indicador && vendedor) {
+        indicadoresSet.add(indicador);
+        if (!indicadorVendedorMap[vendedor]) {
+          indicadorVendedorMap[vendedor] = {};
+        }
+        indicadorVendedorMap[vendedor][indicador] = (indicadorVendedorMap[vendedor][indicador] || 0) + 1;
+      }
     });
+
+    // Format indicador data for table
+    const indicadores = Array.from(indicadoresSet).sort();
+    const indicadorVendedor = Object.entries(indicadorVendedorMap)
+      .map(([vendedor, indicadores]) => ({
+        vendedor,
+        indicadores,
+        total: Object.values(indicadores).reduce((sum, count) => sum + count, 0),
+      }))
+      .sort((a, b) => b.total - a.total);
 
     // Format for charts
     const byVendedor = Object.entries(vendedorCount)
@@ -187,6 +214,8 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
       byPlataforma,
       byDay,
       companies,
+      indicadorVendedor,
+      indicadores,
     };
   }, [data, filters]);
 
@@ -249,6 +278,12 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={processedData.byVendedor} layout="vertical">
+              <defs>
+                <linearGradient id="colorGradientContatos" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#14b8a6" />
+                  <stop offset="100%" stopColor="#3b82f6" />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
               <XAxis type="number" tick={{ fontSize: 12 }} />
               <YAxis
@@ -258,14 +293,7 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
                 width={100}
               />
               <Tooltip content={<CustomTooltip valueLabel="Contatos" />} />
-              <Bar dataKey="value" fill="url(#colorGradient)" radius={[0, 4, 4, 0]}>
-                <defs>
-                  <linearGradient id="colorGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="hsl(168, 76%, 42%)" />
-                    <stop offset="100%" stopColor="hsl(217, 71%, 45%)" />
-                  </linearGradient>
-                </defs>
-              </Bar>
+              <Bar dataKey="value" fill="url(#colorGradientContatos)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
@@ -351,6 +379,47 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
           </ResponsiveContainer>
         </ChartContainer>
       </div>
+
+      {/* Indicador x Vendedor Table */}
+      {processedData.indicadorVendedor.length > 0 && (
+        <ChartContainer
+          title="📋 Contatos por Indicador x Vendedor"
+          isLoading={isLoading}
+          isEmpty={processedData.indicadorVendedor.length === 0}
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-4 py-3 text-left font-semibold text-foreground">Vendedor</th>
+                  {processedData.indicadores.map((indicador) => (
+                    <th key={indicador} className="px-4 py-3 text-center font-semibold text-foreground">
+                      {indicador}
+                    </th>
+                  ))}
+                  <th className="px-4 py-3 text-center font-semibold text-foreground">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {processedData.indicadorVendedor.map((row, index) => (
+                  <tr 
+                    key={row.vendedor} 
+                    className={`border-b border-border/50 ${index % 2 === 0 ? 'bg-muted/30' : ''}`}
+                  >
+                    <td className="px-4 py-3 font-medium text-foreground">{row.vendedor}</td>
+                    {processedData.indicadores.map((indicador) => (
+                      <td key={indicador} className="px-4 py-3 text-center text-muted-foreground">
+                        {row.indicadores[indicador] || 0}
+                      </td>
+                    ))}
+                    <td className="px-4 py-3 text-center font-bold text-foreground">{row.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ChartContainer>
+      )}
     </div>
   );
 }

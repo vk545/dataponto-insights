@@ -262,6 +262,12 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
         >
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={processedData.byColaborador}>
+              <defs>
+                <linearGradient id="barGradientLigacoes" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#14b8a6" />
+                  <stop offset="100%" stopColor="#3b82f6" />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
               <XAxis
                 dataKey="name"
@@ -272,14 +278,7 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
               />
               <YAxis tick={{ fontSize: 12 }} />
               <Tooltip content={<CustomTooltip valueLabel="Ligações" />} />
-              <Bar dataKey="value" fill="url(#barGradient)" radius={[4, 4, 0, 0]}>
-                <defs>
-                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(168, 76%, 42%)" />
-                    <stop offset="100%" stopColor="hsl(217, 71%, 45%)" />
-                  </linearGradient>
-                </defs>
-              </Bar>
+              <Bar dataKey="value" fill="url(#barGradientLigacoes)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
@@ -343,6 +342,12 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
         >
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={processedData.byEmpresa} layout="vertical">
+              <defs>
+                <linearGradient id="barGradientEmpresa" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
               <XAxis type="number" tick={{ fontSize: 12 }} />
               <YAxis
@@ -352,7 +357,7 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
                 width={100}
               />
               <Tooltip content={<CustomTooltip valueLabel="Ligações" />} />
-              <Bar dataKey="value" fill="hsl(217, 71%, 45%)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="value" fill="url(#barGradientEmpresa)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
