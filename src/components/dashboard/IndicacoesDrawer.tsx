@@ -19,8 +19,8 @@ export function IndicacoesDrawer({ data, indicadores }: IndicacoesDrawerProps) {
 
   return (
     <>
-      {/* Mobile Fixed Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
+      {/* Fixed Bottom Bar - Always visible on all devices */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
         {/* Collapsed Bar */}
         <button
           onClick={() => setIsExpanded(true)}
@@ -39,9 +39,9 @@ export function IndicacoesDrawer({ data, indicadores }: IndicacoesDrawerProps) {
         </button>
       </div>
 
-      {/* Full Screen Drawer */}
+      {/* Full Screen Drawer - Works on all devices */}
       {isExpanded && (
-        <div className="fixed inset-0 z-[100] flex flex-col bg-background lg:hidden animate-fade-in">
+        <div className="fixed inset-0 z-[100] flex flex-col bg-background animate-fade-in">
           {/* Header */}
           <div className="flex items-center justify-between bg-gradient-to-r from-primary to-accent p-4 text-white">
             <div className="flex items-center gap-3">
@@ -130,80 +130,8 @@ export function IndicacoesDrawer({ data, indicadores }: IndicacoesDrawerProps) {
         </div>
       )}
 
-      {/* Desktop Version - Always visible in the flow */}
-      <div className="hidden lg:block rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-background to-accent/5 p-6 shadow-lg">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-white shadow-md">
-            <ArrowRight className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">
-              Fluxo de Indicações
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Quem indicou contatos para quem
-            </p>
-          </div>
-        </div>
-
-        {data.length > 0 ? (
-          <div className="overflow-x-auto rounded-lg border border-border bg-card/50">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gradient-to-r from-primary/10 to-accent/10">
-                  <th className="px-4 py-3 text-left font-bold text-foreground border-b border-border">
-                    🧑‍💼 Vendedor
-                  </th>
-                  {indicadores.map((indicador) => (
-                    <th key={indicador} className="px-4 py-3 text-center font-semibold text-foreground border-b border-border">
-                      {indicador}
-                    </th>
-                  ))}
-                  <th className="px-4 py-3 text-center font-bold text-primary border-b border-border bg-primary/10">
-                    📊 Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((row, index) => (
-                  <tr 
-                    key={row.vendedor} 
-                    className={`transition-colors hover:bg-primary/5 ${index % 2 === 0 ? 'bg-muted/20' : 'bg-transparent'}`}
-                  >
-                    <td className="px-4 py-3 font-semibold text-foreground border-b border-border/50">
-                      {row.vendedor}
-                    </td>
-                    {indicadores.map((indicador) => (
-                      <td key={indicador} className="px-4 py-3 text-center border-b border-border/50">
-                        {row.indicadores[indicador] ? (
-                          <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-gradient-to-r from-primary/20 to-accent/20 px-2 font-bold text-foreground">
-                            {row.indicadores[indicador]}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground/50">-</span>
-                        )}
-                      </td>
-                    ))}
-                    <td className="px-4 py-3 text-center border-b border-border/50 bg-primary/5">
-                      <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg bg-gradient-to-r from-primary to-accent px-3 font-bold text-white shadow-sm">
-                        {row.total}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-            <ArrowRight className="mb-2 h-8 w-8 opacity-50" />
-            <p className="text-sm">Nenhuma indicação no período selecionado</p>
-          </div>
-        )}
-      </div>
-
-      {/* Spacer for mobile to prevent content being hidden behind fixed bar - smaller spacer */}
-      <div className="h-16 lg:hidden" />
+      {/* Spacer to prevent content being hidden behind fixed bar */}
+      <div className="h-16" />
     </>
   );
 }
