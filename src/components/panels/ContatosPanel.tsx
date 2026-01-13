@@ -232,7 +232,7 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in">
       {/* Filters */}
       <FilterBar
         filters={filters}
@@ -242,14 +242,8 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
         isLoading={isLoading}
       />
 
-      {/* Indicador x Vendedor - Responsive Drawer */}
-      <IndicacoesDrawer 
-        data={processedData.indicadorVendedor} 
-        indicadores={processedData.indicadores} 
-      />
-
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total de Contatos"
           value={processedData.totalContatos.toLocaleString("pt-BR")}
@@ -276,6 +270,12 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
           variant="warning"
         />
       </div>
+
+      {/* Indicador x Vendedor - Responsive Drawer */}
+      <IndicacoesDrawer 
+        data={processedData.indicadorVendedor} 
+        indicadores={processedData.indicadores} 
+      />
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

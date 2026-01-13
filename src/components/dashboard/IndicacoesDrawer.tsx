@@ -94,7 +94,7 @@ export function IndicacoesDrawer({ data, indicadores }: IndicacoesDrawerProps) {
                             }`}
                           >
                             <span className="text-xs text-muted-foreground">
-                              de {indicador}
+                              {indicador}
                             </span>
                             <span
                               className={`text-sm font-bold ${
@@ -156,10 +156,7 @@ export function IndicacoesDrawer({ data, indicadores }: IndicacoesDrawerProps) {
                   </th>
                   {indicadores.map((indicador) => (
                     <th key={indicador} className="px-4 py-3 text-center font-semibold text-foreground border-b border-border">
-                      <span className="inline-flex items-center gap-1">
-                        <span className="text-xs text-muted-foreground">de</span>
-                        {indicador}
-                      </span>
+                      {indicador}
                     </th>
                   ))}
                   <th className="px-4 py-3 text-center font-bold text-primary border-b border-border bg-primary/10">
@@ -205,8 +202,8 @@ export function IndicacoesDrawer({ data, indicadores }: IndicacoesDrawerProps) {
         )}
       </div>
 
-      {/* Spacer for mobile to prevent content being hidden behind fixed bar */}
-      <div className="h-20 lg:hidden" />
+      {/* Spacer for mobile to prevent content being hidden behind fixed bar - smaller spacer */}
+      <div className="h-16 lg:hidden" />
     </>
   );
 }
