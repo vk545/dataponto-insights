@@ -346,10 +346,7 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) =>
-                  `${name} (${(percent * 100).toFixed(0)}%)`
-                }
-                outerRadius={100}
+                outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
               >
@@ -358,6 +355,16 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
                 ))}
               </Pie>
               <Tooltip content={<PieTooltip valueLabel="Contatos" />} />
+              <Legend 
+                layout="vertical" 
+                align="right" 
+                verticalAlign="middle"
+                wrapperStyle={{ fontSize: '12px', paddingLeft: '10px' }}
+                formatter={(value: string, entry: any) => {
+                  const data = processedData.byProduto.find(p => p.name === value);
+                  return `${value} (${data?.value || 0})`;
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </ChartContainer>
@@ -373,8 +380,8 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
                 data={processedData.byPlataforma}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={100}
+                innerRadius={50}
+                outerRadius={80}
                 fill="#8884d8"
                 paddingAngle={5}
                 dataKey="value"
@@ -384,7 +391,16 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
                 ))}
               </Pie>
               <Tooltip content={<PieTooltip valueLabel="Contatos" />} />
-              <Legend />
+              <Legend 
+                layout="vertical" 
+                align="right" 
+                verticalAlign="middle"
+                wrapperStyle={{ fontSize: '12px', paddingLeft: '10px' }}
+                formatter={(value: string, entry: any) => {
+                  const data = processedData.byPlataforma.find(p => p.name === value);
+                  return `${value} (${data?.value || 0})`;
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </ChartContainer>

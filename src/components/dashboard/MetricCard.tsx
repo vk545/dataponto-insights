@@ -51,21 +51,21 @@ export function MetricCard({
     <Component
       onClick={onClick}
       className={cn(
-        "relative flex flex-col gap-3 rounded-xl border p-5 transition-all duration-200 text-left w-full",
+        "relative flex flex-col gap-2 sm:gap-3 rounded-xl border p-3 sm:p-5 transition-all duration-200 text-left w-full",
         variantStyles[variant],
         onClick && "cursor-pointer hover:shadow-elevated hover:scale-[1.02] active:scale-[0.98]",
         className
       )}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-muted-foreground truncate">
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground line-clamp-2 sm:truncate">
             {title}
           </p>
           {isLoading ? (
-            <div className="mt-2 h-8 w-24 rounded-md skeleton-shimmer" />
+            <div className="mt-1 sm:mt-2 h-6 sm:h-8 w-16 sm:w-24 rounded-md skeleton-shimmer" />
           ) : (
-            <p className="mt-1 text-2xl font-bold tracking-tight text-foreground animate-fade-in">
+            <p className="mt-0.5 sm:mt-1 text-lg sm:text-2xl font-bold tracking-tight text-foreground animate-fade-in break-all">
               {value}
             </p>
           )}
@@ -73,11 +73,11 @@ export function MetricCard({
         {Icon && (
           <div
             className={cn(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+              "flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg",
               iconVariantStyles[variant]
             )}
           >
-            <Icon className="h-5 w-5" />
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
         )}
       </div>
