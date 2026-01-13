@@ -8,6 +8,7 @@ import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
 import { CustomTooltip, PieTooltip } from "@/components/dashboard/CustomTooltip";
 import { IndicacoesDrawer } from "@/components/dashboard/IndicacoesDrawer";
+import { useVendedorAlerts } from "@/hooks/useVendedorAlerts";
 import {
   BarChart,
   Bar,
@@ -90,6 +91,7 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
         companies: [],
         indicadorVendedor: [] as { vendedor: string; indicadores: Record<string, number>; total: number }[],
         indicadores: [] as string[],
+        allVendedores: [] as string[],
       };
     }
 
@@ -208,6 +210,9 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
       }
     });
 
+    // Get all unique vendedores for inactive detection
+    const allVendedores = Object.keys(vendedorCount);
+
     return {
       totalContatos: filteredRows.length,
       peakDay,
@@ -218,8 +223,12 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
       companies,
       indicadorVendedor,
       indicadores,
+      allVendedores,
     };
   }, [data, filters]);
+
+  // Vendedor alerts - shows toast when data is loaded
+  useVendedorAlerts(processedData.byVendedor, processedData.allVendedores);
 
   if (!isActive) return null;
 
