@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header } from "@/components/dashboard/Header";
 import { ContatosPanel } from "@/components/panels/ContatosPanel";
 import { LigacoesPanel } from "@/components/panels/LigacoesPanel";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
+import { useAlertHistory } from "@/hooks/useAlertHistory";
 
 type PanelType = "contatos" | "ligacoes";
 
@@ -10,6 +11,14 @@ export default function Dashboard() {
   const [activePanel, setActivePanel] = useState<PanelType>("contatos");
   const [isDark, setIsDark] = useState(false);
   const { isLoading, lastUpdated, fetchContatos, fetchLigacoes } = useGoogleSheets();
+  const {
+    alerts,
+    addAlert,
+    markAsRead,
+    markAllAsRead,
+    clearAlerts,
+    unreadCount,
+  } = useAlertHistory();
 
   // Check for system dark mode preference
   useEffect(() => {
@@ -36,6 +45,13 @@ export default function Dashboard() {
     }
   };
 
+  const handleAlertGenerated = useCallback(
+    (alert: { type: "warning" | "info" | "success"; title: string; description: string }) => {
+      addAlert(alert.type, alert.title, alert.description);
+    },
+    [addAlert]
+  );
+
   const panelTitles = {
     contatos: "📇 Painel de Contatos",
     ligacoes: "📞 Painel de Ligações",
@@ -50,6 +66,11 @@ export default function Dashboard() {
         isLoading={isLoading}
         isDark={isDark}
         onThemeToggle={handleThemeToggle}
+        alerts={alerts}
+        unreadCount={unreadCount}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
+        onClearAlerts={clearAlerts}
       />
 
       <main className="container py-6">
@@ -66,7 +87,7 @@ export default function Dashboard() {
         </div>
 
         {/* Panel Content */}
-        <ContatosPanel isActive={activePanel === "contatos"} />
+        <ContatosPanel isActive={activePanel === "contatos"} onAlertGenerated={handleAlertGenerated} />
         <LigacoesPanel isActive={activePanel === "ligacoes"} />
       </main>
 
