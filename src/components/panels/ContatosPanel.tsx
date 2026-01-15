@@ -49,16 +49,27 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
     company: "Todos",
   });
 
-  // Initialize date filters with today's date as default
+  // Initialize date filters with today's date - auto-update when day changes
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
     const savedStart = localStorage.getItem("filtro_data_inicio_contato");
     const savedEnd = localStorage.getItem("filtro_data_fim_contato");
     const savedCompany = localStorage.getItem("filtro_empresa_contato");
     
+    // If saved dates are from previous days, reset to today
+    const shouldResetStart = !savedStart || savedStart < today;
+    const shouldResetEnd = !savedEnd || savedEnd < today;
+    
+    const newStart = shouldResetStart ? today : savedStart;
+    const newEnd = shouldResetEnd ? today : savedEnd;
+    
+    // Update localStorage if we're resetting to today
+    if (shouldResetStart) localStorage.setItem("filtro_data_inicio_contato", today);
+    if (shouldResetEnd) localStorage.setItem("filtro_data_fim_contato", today);
+    
     setFilters({
-      dateStart: savedStart || today,
-      dateEnd: savedEnd || today,
+      dateStart: newStart,
+      dateEnd: newEnd,
       company: savedCompany || "Todos",
     });
   }, []);
