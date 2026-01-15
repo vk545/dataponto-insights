@@ -42,16 +42,27 @@ export function LigacoesPanel({ isActive }: LigacoesPanelProps) {
     };
   });
 
-  // Load saved filters or use today
+  // Load saved filters or use today - auto-update when day changes
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
     const savedStart = localStorage.getItem("filtro_data_inicio");
     const savedEnd = localStorage.getItem("filtro_data_fim");
     
+    // If saved dates are from previous days, reset to today
+    const shouldResetStart = !savedStart || savedStart < today;
+    const shouldResetEnd = !savedEnd || savedEnd < today;
+    
+    const newStart = shouldResetStart ? today : savedStart;
+    const newEnd = shouldResetEnd ? today : savedEnd;
+    
+    // Update localStorage if we're resetting to today
+    if (shouldResetStart) localStorage.setItem("filtro_data_inicio", today);
+    if (shouldResetEnd) localStorage.setItem("filtro_data_fim", today);
+    
     setFilters((prev) => ({
       ...prev,
-      dateStart: savedStart || today,
-      dateEnd: savedEnd || today,
+      dateStart: newStart,
+      dateEnd: newEnd,
     }));
   }, []);
 
