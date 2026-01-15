@@ -7,6 +7,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import logoImage from "@/assets/dataponto-logo.png";
+import { AlertBell } from "./AlertBell";
+import { SettingsMenu } from "./SettingsMenu";
+import { AlertItem } from "@/hooks/useAlertHistory";
 
 interface HeaderProps {
   activePanel: "contatos" | "ligacoes";
@@ -15,6 +18,11 @@ interface HeaderProps {
   isLoading: boolean;
   isDark: boolean;
   onThemeToggle: () => void;
+  alerts: AlertItem[];
+  unreadCount: number;
+  onMarkAsRead: (id: string) => void;
+  onMarkAllAsRead: () => void;
+  onClearAlerts: () => void;
 }
 
 export function Header({
@@ -24,6 +32,11 @@ export function Header({
   isLoading,
   isDark,
   onThemeToggle,
+  alerts,
+  unreadCount,
+  onMarkAsRead,
+  onMarkAllAsRead,
+  onClearAlerts,
 }: HeaderProps) {
   const panelLabels = {
     contatos: { icon: "📇", label: "Contatos" },
@@ -73,7 +86,7 @@ export function Header({
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -89,6 +102,18 @@ export function Header({
           <Button variant="ghost" size="icon" onClick={onThemeToggle}>
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+
+          {/* Alert Bell */}
+          <AlertBell
+            alerts={alerts}
+            unreadCount={unreadCount}
+            onMarkAsRead={onMarkAsRead}
+            onMarkAllAsRead={onMarkAllAsRead}
+            onClear={onClearAlerts}
+          />
+
+          {/* Settings Menu (3 dots) */}
+          <SettingsMenu />
 
           {/* Mobile Menu */}
           <DropdownMenu>

@@ -9,6 +9,7 @@ import { ErrorState } from "@/components/dashboard/ErrorState";
 import { CustomTooltip, PieTooltip } from "@/components/dashboard/CustomTooltip";
 import { IndicacoesDrawer } from "@/components/dashboard/IndicacoesDrawer";
 import { useVendedorAlerts } from "@/hooks/useVendedorAlerts";
+import { useGoalAlerts } from "@/hooks/useGoalAlerts";
 import {
   BarChart,
   Bar,
@@ -28,11 +29,18 @@ import {
 
 const COLORS = ["#14b8a6", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6", "#10b981", "#06b6d4", "#f43f5e"];
 
-interface ContatosPanelProps {
-  isActive: boolean;
+interface AlertCallback {
+  type: "warning" | "info" | "success";
+  title: string;
+  description: string;
 }
 
-export function ContatosPanel({ isActive }: ContatosPanelProps) {
+interface ContatosPanelProps {
+  isActive: boolean;
+  onAlertGenerated?: (alert: AlertCallback) => void;
+}
+
+export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps) {
   const { isLoading, error, fetchContatos, parseDate, normalizeText } = useGoogleSheets();
   const [data, setData] = useState<SheetData | null>(null);
   const [filters, setFilters] = useState({
@@ -228,7 +236,11 @@ export function ContatosPanel({ isActive }: ContatosPanelProps) {
   }, [data, filters]);
 
   // Vendedor alerts - shows toast when data is loaded
-  useVendedorAlerts(processedData.byVendedor, processedData.allVendedores);
+  useVendedorAlerts(processedData.byVendedor, processedData.allVendedores, {}, onAlertGenerated);
+  
+  // Goal alerts - shows toast when goal is reached
+  const periodIdentifier = `${filters.dateStart}_${filters.dateEnd}_${filters.company}`;
+  useGoalAlerts(processedData.totalContatos, periodIdentifier);
 
   if (!isActive) return null;
 
