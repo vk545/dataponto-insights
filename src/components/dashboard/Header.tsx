@@ -11,6 +11,17 @@ import { AlertBell } from "./AlertBell";
 import { SettingsMenu } from "./SettingsMenu";
 import { AlertItem } from "@/hooks/useAlertHistory";
 
+interface PlataformaProduct {
+  produto: string;
+  quantidade: number;
+}
+
+interface PlataformaData {
+  plataforma: string;
+  total: number;
+  produtos: PlataformaProduct[];
+}
+
 interface HeaderProps {
   activePanel: "contatos" | "ligacoes";
   onPanelChange: (panel: "contatos" | "ligacoes") => void;
@@ -23,6 +34,9 @@ interface HeaderProps {
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   onClearAlerts: () => void;
+  plataformasData?: PlataformaData[];
+  dateStart?: string;
+  dateEnd?: string;
 }
 
 export function Header({
@@ -37,6 +51,9 @@ export function Header({
   onMarkAsRead,
   onMarkAllAsRead,
   onClearAlerts,
+  plataformasData = [],
+  dateStart = "",
+  dateEnd = "",
 }: HeaderProps) {
   const panelLabels = {
     contatos: { icon: "📇", label: "Contatos" },
@@ -113,7 +130,11 @@ export function Header({
           />
 
           {/* Settings Menu (3 dots) */}
-          <SettingsMenu />
+          <SettingsMenu 
+            plataformasData={plataformasData}
+            dateStart={dateStart}
+            dateEnd={dateEnd}
+          />
 
           {/* Mobile Menu */}
           <DropdownMenu>

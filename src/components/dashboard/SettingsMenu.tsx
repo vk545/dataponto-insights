@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MoreVertical, Target, Check } from "lucide-react";
+import { MoreVertical, Target, Check, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,9 +22,28 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { getStoredGoal, saveGoal, GoalConfig } from "@/hooks/useGoalAlerts";
 import { toast } from "sonner";
+import { PlataformaAnalysisDrawer } from "./PlataformaAnalysisDrawer";
 
-export function SettingsMenu() {
+interface PlataformaProduct {
+  produto: string;
+  quantidade: number;
+}
+
+interface PlataformaData {
+  plataforma: string;
+  total: number;
+  produtos: PlataformaProduct[];
+}
+
+interface SettingsMenuProps {
+  plataformasData?: PlataformaData[];
+  dateStart?: string;
+  dateEnd?: string;
+}
+
+export function SettingsMenu({ plataformasData = [], dateStart = "", dateEnd = "" }: SettingsMenuProps) {
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
+  const [isPlataformaDrawerOpen, setIsPlataformaDrawerOpen] = useState(false);
   const [goalConfig, setGoalConfig] = useState<GoalConfig>(getStoredGoal());
 
   useEffect(() => {
@@ -60,9 +79,14 @@ export function SettingsMenu() {
             <Target className="mr-2 h-4 w-4" />
             Configurar Meta
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsPlataformaDrawerOpen(true)}>
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Análise de Plataformas
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {/* Goal Configuration Dialog */}
       <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -141,6 +165,15 @@ export function SettingsMenu() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Platform Analysis Drawer */}
+      <PlataformaAnalysisDrawer
+        open={isPlataformaDrawerOpen}
+        onOpenChange={setIsPlataformaDrawerOpen}
+        plataformasData={plataformasData}
+        dateStart={dateStart}
+        dateEnd={dateEnd}
+      />
     </>
   );
 }
