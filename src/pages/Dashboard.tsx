@@ -4,6 +4,7 @@ import { ContatosPanel } from "@/components/panels/ContatosPanel";
 import { LigacoesPanel } from "@/components/panels/LigacoesPanel";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { useAlertHistory } from "@/hooks/useAlertHistory";
+import { usePlataformasData } from "@/hooks/usePlataformasData";
 
 type PanelType = "contatos" | "ligacoes";
 
@@ -19,6 +20,7 @@ export default function Dashboard() {
     clearAlerts,
     unreadCount,
   } = useAlertHistory();
+  const { plataformasData, dateStart, dateEnd, refresh: refreshPlataformas } = usePlataformasData();
 
   // Check for system dark mode preference
   useEffect(() => {
@@ -38,6 +40,7 @@ export default function Dashboard() {
     switch (activePanel) {
       case "contatos":
         fetchContatos();
+        refreshPlataformas();
         break;
       case "ligacoes":
         fetchLigacoes();
@@ -71,6 +74,9 @@ export default function Dashboard() {
         onMarkAsRead={markAsRead}
         onMarkAllAsRead={markAllAsRead}
         onClearAlerts={clearAlerts}
+        plataformasData={plataformasData}
+        dateStart={dateStart}
+        dateEnd={dateEnd}
       />
 
       <main className="container py-6">
