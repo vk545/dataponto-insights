@@ -8,6 +8,7 @@ import { LoadingState } from "@/components/dashboard/LoadingState";
 import { ErrorState } from "@/components/dashboard/ErrorState";
 import { CustomTooltip, PieTooltip } from "@/components/dashboard/CustomTooltip";
 import { IndicacoesDrawer } from "@/components/dashboard/IndicacoesDrawer";
+import { HeatmapChart } from "@/components/dashboard/HeatmapChart";
 import { useVendedorAlerts } from "@/hooks/useVendedorAlerts";
 import { useGoalAlerts } from "@/hooks/useGoalAlerts";
 import {
@@ -107,6 +108,7 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
         byProduto: [],
         byPlataforma: [],
         byDay: [],
+        byDayOfWeek: [] as { dayOfWeek: number; dayName: string; count: number }[],
         companies: [],
         indicadorVendedor: [] as { vendedor: string; indicadores: Record<string, number>; total: number }[],
         indicadores: [] as string[],
@@ -161,6 +163,7 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
     const produtoCount: Record<string, number> = {};
     const plataformaCount: Record<string, number> = {};
     const dayCount: Record<string, number> = {};
+    const dayOfWeekCount: Record<number, number> = {};
     
     // Count indicador -> vendedor relationship
     const indicadorVendedorMap: Record<string, Record<string, number>> = {};
@@ -177,7 +180,13 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
       vendedorCount[vendedor] = (vendedorCount[vendedor] || 0) + 1;
       produtoCount[produto] = (produtoCount[produto] || 0) + 1;
       if (plataforma) plataformaCount[plataforma] = (plataformaCount[plataforma] || 0) + 1;
-      if (dataFormatada) dayCount[dataFormatada] = (dayCount[dataFormatada] || 0) + 1;
+      if (dataFormatada) {
+        dayCount[dataFormatada] = (dayCount[dataFormatada] || 0) + 1;
+        // Calculate day of week (0 = Sunday, 1 = Monday, etc.)
+        const dateObj = new Date(dataFormatada + "T12:00:00");
+        const dayOfWeek = dateObj.getDay();
+        dayOfWeekCount[dayOfWeek] = (dayOfWeekCount[dayOfWeek] || 0) + 1;
+      }
       
       // Track indicador -> vendedor
       if (indicador && vendedor) {
@@ -220,6 +229,14 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
         return { date: `${dia}/${mes}`, value, fullDate: date };
       });
 
+    // Format day of week data for heatmap
+    const DAYS_PT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const byDayOfWeek = DAYS_PT.map((dayName, index) => ({
+      dayOfWeek: index,
+      dayName,
+      count: dayOfWeekCount[index] || 0,
+    }));
+
     // Find peak day
     let peakDay = { date: "--", count: 0 };
     Object.entries(dayCount).forEach(([date, count]) => {
@@ -239,6 +256,7 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
       byProduto,
       byPlataforma,
       byDay,
+      byDayOfWeek,
       companies,
       indicadorVendedor,
       indicadores,
@@ -437,6 +455,15 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
           </ResponsiveContainer>
         </ChartContainer>
       </div>
+
+      {/* Heatmap - Day of Week */}
+      <ChartContainer
+        title="🔥 Mapa de Calor - Contatos por Dia da Semana"
+        isLoading={isLoading}
+        isEmpty={processedData.byDayOfWeek.every(d => d.count === 0)}
+      >
+        <HeatmapChart data={processedData.byDayOfWeek} />
+      </ChartContainer>
     </div>
   );
 }
