@@ -1,15 +1,20 @@
-import { useMemo } from "react";
-import { Tooltip, ResponsiveContainer } from "recharts";
+import { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
 
 interface HeatmapData {
   dayOfWeek: number;
   dayName: string;
   count: number;
+  date?: string; // ISO date string for filtering
 }
 
 interface HeatmapChartProps {
   data: HeatmapData[];
+  /** Raw data with dates for independent filtering */
+  rawData?: { date: string; count: number }[];
 }
+
+type HeatmapPeriod = "filtro" | "semana" | "mes";
 
 const DAYS_PT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -24,11 +29,59 @@ function getHeatColor(value: number, max: number): string {
   return "hsl(168, 76%, 30%)";
 }
 
-export function HeatmapChart({ data }: HeatmapChartProps) {
+function getDateRange(period: HeatmapPeriod): { start: Date; end: Date } {
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  
+  const start = new Date();
+  
+  switch (period) {
+    case "semana":
+      start.setDate(today.getDate() - 6);
+      break;
+    case "mes":
+      start.setDate(today.getDate() - 29);
+      break;
+    default:
+      // For "filtro", we return a range that won't filter (handled separately)
+      return { start: new Date(0), end: today };
+  }
+  
+  start.setHours(0, 0, 0, 0);
+  return { start, end: today };
+}
+
+export function HeatmapChart({ data, rawData }: HeatmapChartProps) {
+  const [period, setPeriod] = useState<HeatmapPeriod>("filtro");
+
   const { heatmapData, maxValue } = useMemo(() => {
+    let filteredData = data;
+    
+    // If we have rawData and a period filter, calculate from rawData
+    if (rawData && period !== "filtro") {
+      const { start, end } = getDateRange(period);
+      
+      const dayOfWeekCount: Record<number, number> = {};
+      
+      rawData.forEach(item => {
+        const itemDate = new Date(item.date + "T12:00:00");
+        
+        if (itemDate >= start && itemDate <= end) {
+          const dayOfWeek = itemDate.getDay();
+          dayOfWeekCount[dayOfWeek] = (dayOfWeekCount[dayOfWeek] || 0) + item.count;
+        }
+      });
+      
+      filteredData = DAYS_PT.map((dayName, index) => ({
+        dayOfWeek: index,
+        dayName,
+        count: dayOfWeekCount[index] || 0,
+      }));
+    }
+
     // Ensure we have all 7 days
     const dayMap = new Map<number, number>();
-    data.forEach(d => {
+    filteredData.forEach(d => {
       dayMap.set(d.dayOfWeek, (dayMap.get(d.dayOfWeek) || 0) + d.count);
     });
 
@@ -41,13 +94,34 @@ export function HeatmapChart({ data }: HeatmapChartProps) {
     const maxValue = Math.max(...heatmapData.map(d => d.count), 1);
 
     return { heatmapData, maxValue };
-  }, [data]);
+  }, [data, rawData, period]);
 
   const total = heatmapData.reduce((sum, d) => sum + d.count, 0);
   const peakDay = heatmapData.reduce((max, d) => (d.count > max.count ? d : max), heatmapData[0]);
 
+  const periodLabels: Record<HeatmapPeriod, string> = {
+    filtro: "Período do Filtro",
+    semana: "Última Semana",
+    mes: "Último Mês",
+  };
+
   return (
     <div className="space-y-4">
+      {/* Period Filter - Independent from main filter */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        {(["filtro", "semana", "mes"] as HeatmapPeriod[]).map((p) => (
+          <Button
+            key={p}
+            variant={period === p ? "default" : "outline"}
+            size="sm"
+            onClick={() => setPeriod(p)}
+            className={period === p ? "gradient-primary text-primary-foreground" : ""}
+          >
+            {periodLabels[p]}
+          </Button>
+        ))}
+      </div>
+
       {/* Heatmap Grid */}
       <div className="flex gap-2 justify-center flex-wrap">
         {heatmapData.map((day) => (

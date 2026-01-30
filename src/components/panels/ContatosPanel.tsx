@@ -109,6 +109,7 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
         byPlataforma: [],
         byDay: [],
         byDayOfWeek: [] as { dayOfWeek: number; dayName: string; count: number }[],
+        heatmapRawData: [] as { date: string; count: number }[],
         companies: [],
         indicadorVendedor: [] as { vendedor: string; indicadores: Record<string, number>; total: number }[],
         indicadores: [] as string[],
@@ -141,6 +142,25 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
     const companies = Array.from(companiesMap.entries()).map(([value, label]) => ({
       value,
       label,
+    }));
+
+    // Build raw data for heatmap (company-filtered only, no date filter)
+    const heatmapDayCount: Record<string, number> = {};
+    rows.forEach((row) => {
+      const dataStr = row[headers[idxData]];
+      const dataFormatada = parseDate(dataStr);
+      const empresaNorm = normalizeText(row[headers[idxEmpresa]] || "");
+      
+      const empresaOK = filters.company === "Todos" || empresaNorm === filters.company;
+      
+      if (empresaOK && dataFormatada) {
+        heatmapDayCount[dataFormatada] = (heatmapDayCount[dataFormatada] || 0) + 1;
+      }
+    });
+    
+    const heatmapRawData = Object.entries(heatmapDayCount).map(([date, count]) => ({
+      date,
+      count,
     }));
 
     // Filter rows
@@ -257,6 +277,7 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
       byPlataforma,
       byDay,
       byDayOfWeek,
+      heatmapRawData,
       companies,
       indicadorVendedor,
       indicadores,
@@ -462,7 +483,10 @@ export function ContatosPanel({ isActive, onAlertGenerated }: ContatosPanelProps
         isLoading={isLoading}
         isEmpty={processedData.byDayOfWeek.every(d => d.count === 0)}
       >
-        <HeatmapChart data={processedData.byDayOfWeek} />
+        <HeatmapChart 
+          data={processedData.byDayOfWeek} 
+          rawData={processedData.heatmapRawData}
+        />
       </ChartContainer>
     </div>
   );
