@@ -5,6 +5,7 @@ import { LigacoesPanel } from "@/components/panels/LigacoesPanel";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { useAlertHistory } from "@/hooks/useAlertHistory";
 import { usePlataformasData } from "@/hooks/usePlataformasData";
+import { FloatingPhone } from "@/components/dashboard/FloatingPhone";
 
 type PanelType = "contatos" | "ligacoes";
 
@@ -111,6 +112,7 @@ export default function Dashboard() {
           </div>
         </div>
       </footer>
+      <FloatingPhone />
     </div>
   );
 }
