@@ -115,14 +115,16 @@ export function FilterBar({
             <User className="h-4 w-4 text-success" />
           </div>
           <Select
-            value={filters.seller || ""}
-            onValueChange={(value) => onFilterChange("seller", value)}
+            value={filters.seller || ALL}
+            onValueChange={(value) =>
+              onFilterChange("seller", value === ALL ? "" : value)
+            }
           >
             <SelectTrigger className="h-9 w-[160px] text-sm">
               <SelectValue placeholder="Vendedor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos</SelectItem>
+              <SelectItem value={ALL}>Todos</SelectItem>
               {options.sellers.map((seller) => (
                 <SelectItem key={seller.value} value={seller.value}>
                   {seller.label}
@@ -136,14 +138,16 @@ export function FilterBar({
       {/* Product Filter (optional) */}
       {options.products && (
         <Select
-          value={filters.product || ""}
-          onValueChange={(value) => onFilterChange("product", value)}
+          value={filters.product || ALL}
+          onValueChange={(value) =>
+            onFilterChange("product", value === ALL ? "" : value)
+          }
         >
           <SelectTrigger className="h-9 w-[160px] text-sm">
             <SelectValue placeholder="Produto" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos</SelectItem>
+            <SelectItem value={ALL}>Todos</SelectItem>
             {options.products.map((product) => (
               <SelectItem key={product.value} value={product.value}>
                 {product.label}
