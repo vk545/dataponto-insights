@@ -66,7 +66,7 @@ export function PlataformaAnalysisDrawer({
   const [comparePlataforma2, setComparePlataforma2] = useState<string>("");
 
   const plataformas = useMemo(() => {
-    return plataformasData.map((p) => p.plataforma).sort();
+    return plataformasData.map((p) => p.plataforma).filter(Boolean).sort();
   }, [plataformasData]);
 
   const selectedPlataformaData = useMemo(() => {
