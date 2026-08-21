@@ -76,7 +76,7 @@ export function FilterBar({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Todos">Todas</SelectItem>
-            {options.companies.map((company) => (
+            {options.companies.filter((o) => o.value).map((company) => (
               <SelectItem key={company.value} value={company.value}>
                 {company.label}
               </SelectItem>
@@ -100,7 +100,7 @@ export function FilterBar({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Todos">Todos</SelectItem>
-              {options.collaborators.map((collab) => (
+              {options.collaborators.filter((o) => o.value).map((collab) => (
                 <SelectItem key={collab.value} value={collab.value}>
                   {collab.label}
                 </SelectItem>
@@ -127,7 +127,7 @@ export function FilterBar({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>Todos</SelectItem>
-              {options.sellers.map((seller) => (
+              {options.sellers.filter((o) => o.value).map((seller) => (
                 <SelectItem key={seller.value} value={seller.value}>
                   {seller.label}
                 </SelectItem>
@@ -150,7 +150,7 @@ export function FilterBar({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>Todos</SelectItem>
-            {options.products.map((product) => (
+            {options.products.filter((o) => o.value).map((product) => (
               <SelectItem key={product.value} value={product.value}>
                 {product.label}
               </SelectItem>
