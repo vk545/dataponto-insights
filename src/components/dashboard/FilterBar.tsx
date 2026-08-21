@@ -9,6 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const ALL = "__all__";
+
 interface FilterBarProps {
   filters: {
     dateStart: string;
