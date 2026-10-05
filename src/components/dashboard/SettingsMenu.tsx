@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { MoreVertical, Target, Check, BarChart3 } from "lucide-react";
+import { MoreVertical, Target, Check, BarChart3, ClipboardList } from "lucide-react";
+import { ReajustesDialog } from "./ReajustesDialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -44,6 +45,7 @@ interface SettingsMenuProps {
 export function SettingsMenu({ plataformasData = [], dateStart = "", dateEnd = "" }: SettingsMenuProps) {
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false);
   const [isPlataformaDrawerOpen, setIsPlataformaDrawerOpen] = useState(false);
+  const [isReajustesOpen, setIsReajustesOpen] = useState(false);
   const [goalConfig, setGoalConfig] = useState<GoalConfig>(getStoredGoal());
 
   useEffect(() => {
@@ -82,6 +84,10 @@ export function SettingsMenu({ plataformasData = [], dateStart = "", dateEnd = "
           <DropdownMenuItem onClick={() => setIsPlataformaDrawerOpen(true)}>
             <BarChart3 className="mr-2 h-4 w-4" />
             Análise de Plataformas
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsReajustesOpen(true)}>
+            <ClipboardList className="mr-2 h-4 w-4" />
+            Reajustes de Preços
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -167,6 +173,7 @@ export function SettingsMenu({ plataformasData = [], dateStart = "", dateEnd = "
       </Dialog>
 
       {/* Platform Analysis Drawer */}
+      <ReajustesDialog open={isReajustesOpen} onOpenChange={setIsReajustesOpen} />
       <PlataformaAnalysisDrawer
         open={isPlataformaDrawerOpen}
         onOpenChange={setIsPlataformaDrawerOpen}

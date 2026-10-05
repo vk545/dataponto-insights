@@ -1,0 +1,1 @@
+- Price-adjustment (Reajustes) reads/writes its Google Sheet only through the `reajustes` edge function via the Sheets connector; the app password lives in the sheet's Config tab, so it never ships in frontend code.
