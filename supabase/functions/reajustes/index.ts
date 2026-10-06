@@ -30,6 +30,37 @@ const num = (s: string) => Number(String(s || "0").replace(/\./g, "").replace(",
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+// ---- Envio de e-mail via Gmail ----
+const GMAIL_GATEWAY = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
+const APP_URL = "https://dataponto-dash-glow.lovable.app";
+
+const b64 = (s: string) =>
+  btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
+const mimeHeader = (v: string) => (/^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
+
+async function sendEmail(to: string, subject: string, body: string) {
+  const lk = Deno.env.get("LOVABLE_API_KEY");
+  const mk = Deno.env.get("GOOGLE_MAIL_API_KEY");
+  if (!lk || !mk) throw new Error("Credenciais de e-mail ausentes");
+  const raw = [
+    `To: ${to}`,
+    `Subject: ${mimeHeader(subject)}`,
+    "MIME-Version: 1.0",
+    'Content-Type: text/plain; charset="UTF-8"',
+    "",
+    body,
+  ].join("\r\n");
+  const r = await fetch(`${GMAIL_GATEWAY}/users/me/messages/send`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${lk}`, "X-Connection-Api-Key": mk, "Content-Type": "application/json" },
+    body: JSON.stringify({ raw: b64(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") }),
+  });
+  const t = await r.text();
+  if (!r.ok) throw new Error(`E-mail [${r.status}]: ${t}`);
+}
+
+const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
