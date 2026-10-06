@@ -122,7 +122,29 @@ Deno.serve(async (req) => {
       }
       if (!rows.length) return json({ error: "Nenhum item válido" }, 400);
       await gs(`/values/Reajustes!A:P:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, { method: "POST", body: JSON.stringify({ values: rows }) });
-      return json({ ok: true, lote, itens: rows.length, destinatarios: dest });
+
+      // Envia e-mail de aviso com link de confirmação para cada destinatário
+      let emailEnviado = false;
+      let emailErro = "";
+      const destList = [config["Email diretor"], config["Email comercial"]].filter(Boolean);
+      if (destList.length) {
+        const linhas = rows.map((r) => `• ${r[3]} (${r[2]}): de ${fmtBRL(num(r[4]))} para ${fmtBRL(num(r[5]))} (${r[6]})`).join("\n");
+        try {
+          for (const d of destList) {
+            const link = `${APP_URL}/confirmar-reajuste?lote=${lote}&email=${encodeURIComponent(d)}`;
+            await sendEmail(
+              d,
+              `Reajuste de preços ${lote} — confirmação necessária`,
+              `Olá!\n\nUm novo reajuste de preços foi registrado no painel DATAPONTO:\n\n${linhas}\n\nVigência: ${vigencia || "a definir"}\nResponsável: ${config["Responsável"] || "-"}\n${obs ? `Observações: ${obs}\n` : ""}\nPor favor, confirme o recebimento clicando no link abaixo:\n${link}\n\n— Painel de Reajustes DATAPONTO`,
+            );
+          }
+          emailEnviado = true;
+        } catch (e) {
+          console.error(e);
+          emailErro = e instanceof Error ? e.message : "Falha no envio";
+        }
+      }
+      return json({ ok: true, lote, itens: rows.length, destinatarios: dest, emailEnviado, emailErro });
     }
 
     if (action === "implant") {
