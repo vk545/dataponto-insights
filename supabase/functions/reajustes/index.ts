@@ -30,6 +30,37 @@ const num = (s: string) => Number(String(s || "0").replace(/\./g, "").replace(",
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+// ---- Envio de e-mail via Gmail ----
+const GMAIL_GATEWAY = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
+const APP_URL = "https://dataponto-dash-glow.lovable.app";
+
+const b64 = (s: string) =>
+  btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
+const mimeHeader = (v: string) => (/^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
+
+async function sendEmail(to: string, subject: string, body: string) {
+  const lk = Deno.env.get("LOVABLE_API_KEY");
+  const mk = Deno.env.get("GOOGLE_MAIL_API_KEY");
+  if (!lk || !mk) throw new Error("Credenciais de e-mail ausentes");
+  const raw = [
+    `To: ${to}`,
+    `Subject: ${mimeHeader(subject)}`,
+    "MIME-Version: 1.0",
+    'Content-Type: text/plain; charset="UTF-8"',
+    "",
+    body,
+  ].join("\r\n");
+  const r = await fetch(`${GMAIL_GATEWAY}/users/me/messages/send`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${lk}`, "X-Connection-Api-Key": mk, "Content-Type": "application/json" },
+    body: JSON.stringify({ raw: b64(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") }),
+  });
+  const t = await r.text();
+  if (!r.ok) throw new Error(`E-mail [${r.status}]: ${t}`);
+}
+
+const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -91,7 +122,29 @@ Deno.serve(async (req) => {
       }
       if (!rows.length) return json({ error: "Nenhum item válido" }, 400);
       await gs(`/values/Reajustes!A:P:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, { method: "POST", body: JSON.stringify({ values: rows }) });
-      return json({ ok: true, lote, itens: rows.length, destinatarios: dest });
+
+      // Envia e-mail de aviso com link de confirmação para cada destinatário
+      let emailEnviado = false;
+      let emailErro = "";
+      const destList = [config["Email diretor"], config["Email comercial"]].filter(Boolean);
+      if (destList.length) {
+        const linhas = rows.map((r) => `• ${r[3]} (${r[2]}): de ${fmtBRL(num(r[4]))} para ${fmtBRL(num(r[5]))} (${r[6]})`).join("\n");
+        try {
+          for (const d of destList) {
+            const link = `${APP_URL}/confirmar-reajuste?lote=${lote}&email=${encodeURIComponent(d)}`;
+            await sendEmail(
+              d,
+              `Reajuste de preços ${lote} — confirmação necessária`,
+              `Olá!\n\nUm novo reajuste de preços foi registrado no painel DATAPONTO:\n\n${linhas}\n\nVigência: ${vigencia || "a definir"}\nResponsável: ${config["Responsável"] || "-"}\n${obs ? `Observações: ${obs}\n` : ""}\nPor favor, confirme o recebimento clicando no link abaixo:\n${link}\n\n— Painel de Reajustes DATAPONTO`,
+            );
+          }
+          emailEnviado = true;
+        } catch (e) {
+          console.error(e);
+          emailErro = e instanceof Error ? e.message : "Falha no envio";
+        }
+      }
+      return json({ ok: true, lote, itens: rows.length, destinatarios: dest, emailEnviado, emailErro });
     }
 
     if (action === "implant") {
