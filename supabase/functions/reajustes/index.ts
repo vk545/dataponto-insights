@@ -32,7 +32,7 @@ const json = (b: unknown, status = 200) =>
 
 // ---- Envio de e-mail via Gmail ----
 const GMAIL_GATEWAY = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
-const APP_URL = "https://dataponto-dash-glow.lovable.app";
+const CONFIRM_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/reajustes`;
 
 const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
@@ -46,7 +46,7 @@ async function sendEmail(to: string, subject: string, body: string) {
     `To: ${to}`,
     `Subject: ${mimeHeader(subject)}`,
     "MIME-Version: 1.0",
-    'Content-Type: text/plain; charset="UTF-8"',
+    'Content-Type: text/html; charset="UTF-8"',
     "",
     body,
   ].join("\r\n");
@@ -64,6 +64,23 @@ const fmtBRL = (v: number) => v.toLocaleString("pt-BR", { style: "currency", cur
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    if (req.method === "GET") {
+      const u = new URL(req.url);
+      const lote = (u.searchParams.get("lote") || "").slice(0, 40);
+      const email = (u.searchParams.get("email") || "").slice(0, 200);
+      const txt = (m: string, st = 200) => new Response(m, { status: st, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      if (!lote) return txt("Link inválido.", 400);
+      const { reaj } = await readAll();
+      const data: any[] = [];
+      reaj.forEach((r: string[], i: number) => {
+        if (i > 0 && r[0] === lote && (r[11] || "") === "Pendente") {
+          data.push({ range: `Reajustes!L${i + 1}:O${i + 1}`, values: [["Recebido", r[12] || "", email, nowBR()]] });
+        }
+      });
+      if (!reaj.some((r: string[], i: number) => i > 0 && r[0] === lote)) return txt("Reajuste não encontrado.", 404);
+      if (data.length) await gs(`/values:batchUpdate`, { method: "POST", body: JSON.stringify({ valueInputOption: "USER_ENTERED", data }) });
+      return txt(`✅ Recebimento confirmado!\n\nReajuste ${lote} — obrigado. Você já pode fechar esta página.`);
+    }
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "");
     const { itens, reaj, config } = await readAll();
@@ -85,8 +102,6 @@ Deno.serve(async (req) => {
       return json({ ok: true, already: data.length === 0 });
     }
 
-    // Everything else requires the app password
-    if (!config["Senha do app"] || body.password !== config["Senha do app"]) return json({ error: "Senha incorreta" }, 401);
 
     if (action === "login" || action === "list") {
       return json({
@@ -131,11 +146,12 @@ Deno.serve(async (req) => {
         const linhas = rows.map((r) => `• ${r[3]} (${r[2]}): de ${fmtBRL(num(r[4]))} para ${fmtBRL(num(r[5]))} (${r[6]})`).join("\n");
         try {
           for (const d of destList) {
-            const link = `${APP_URL}/confirmar-reajuste?lote=${lote}&email=${encodeURIComponent(d)}`;
+            const link = `${CONFIRM_URL}?lote=${lote}&email=${encodeURIComponent(d)}`;
+            const linhasHtml = rows.map((r) => `<li>${r[3]} (${r[2]}): de ${fmtBRL(num(r[4]))} para <b>${fmtBRL(num(r[5]))}</b> (${r[6]})</li>`).join("");
             await sendEmail(
               d,
               `Reajuste de preços ${lote} — confirmação necessária`,
-              `Olá!\n\nUm novo reajuste de preços foi registrado no painel DATAPONTO:\n\n${linhas}\n\nVigência: ${vigencia || "a definir"}\nResponsável: ${config["Responsável"] || "-"}\n${obs ? `Observações: ${obs}\n` : ""}\nPor favor, confirme o recebimento clicando no link abaixo:\n${link}\n\n— Painel de Reajustes DATAPONTO`,
+              `<div style="font-family:Arial,sans-serif;font-size:15px;color:#222"><p>Olá!</p><p>Um novo reajuste de preços foi registrado:</p><ul>${linhasHtml}</ul><p>Vigência: ${vigencia || "a definir"}<br>Responsável: ${config["Responsável"] || "-"}${obs ? `<br>Observações: ${obs}` : ""}</p><p style="margin:24px 0"><a href="${link}" style="background:#0e7490;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">✅ Confirmar recebimento</a></p><p>— DATAPONTO</p></div>`,
             );
           }
           emailEnviado = true;

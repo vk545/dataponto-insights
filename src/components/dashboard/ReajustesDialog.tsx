@@ -37,7 +37,6 @@ function statusVariant(s: string) {
 }
 
 export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const [password, setPassword] = useState(() => sessionStorage.getItem("reajuste_pw") || "");
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
@@ -46,12 +45,11 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
   const [vigencia, setVigencia] = useState(() => new Date().toISOString().slice(0, 10));
   const [obs, setObs] = useState("");
 
-  const load = async (pw = password) => {
+  const load = async () => {
     setLoading(true);
     try {
-      const d = await call({ action: "list", password: pw });
+      const d = await call({ action: "list" });
       setData(d);
-      sessionStorage.setItem("reajuste_pw", pw);
     } catch (e: any) {
       toast.error(e.message);
       setData(null);
@@ -66,7 +64,7 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
     setLoading(true);
     try {
       const [y, m, d] = vigencia.split("-");
-      const r = await call({ action: "create", password, codigos: selected, modo, valor: v, vigencia: `${d}/${m}/${y}`, obs, origin: window.location.origin });
+      const r = await call({ action: "create", codigos: selected, modo, valor: v, vigencia: `${d}/${m}/${y}`, obs, origin: window.location.origin });
       toast.success(`Reajuste gravado (${r.itens} item(ns))`, { description: `Aviso para: ${r.destinatarios}` });
       setSelected([]); setValor(""); setObs("");
       await load();
@@ -75,9 +73,11 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
 
   const implantar = async (row: number) => {
     setLoading(true);
-    try { await call({ action: "implant", password, row }); toast.success("Marcado como implantado"); await load(); }
+    try { await call({ action: "implant", row }); toast.success("Marcado como implantado"); await load(); }
     catch (e: any) { toast.error(e.message); setLoading(false); }
   };
+
+  useEffect(() => { if (open && !data) load(); }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,13 +88,7 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
         </DialogHeader>
 
         {!data ? (
-          <form className="space-y-4 py-4" onSubmit={(e) => { e.preventDefault(); load(); }}>
-            <Label htmlFor="pw" className="text-base flex items-center gap-2"><Lock className="h-4 w-4" /> Senha</Label>
-            <Input id="pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 text-lg" autoFocus />
-            <Button type="submit" className="w-full h-12 text-base" disabled={loading || !password}>
-              {loading ? "Entrando..." : "Entrar"}
-            </Button>
-          </form>
+          <p className="py-8 text-center text-muted-foreground">{loading ? "Carregando..." : "Não foi possível carregar."}</p>
         ) : (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
