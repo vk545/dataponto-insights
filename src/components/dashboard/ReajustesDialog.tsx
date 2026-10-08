@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, RefreshCw, Check, Mail, Pencil, Trash2 } from "lucide-react";
+import { ExternalLink, RefreshCw, Check, Mail, Pencil, Trash2, Search, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 interface Item { codigo: string; nome: string; tipo: string; valor: number }
@@ -46,6 +46,8 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
   const [obs, setObs] = useState("");
   const [editEmails, setEditEmails] = useState(false);
   const [emailsTxt, setEmailsTxt] = useState("");
+  const [busca, setBusca] = useState("");
+  const [abertos, setAbertos] = useState<Record<string, boolean>>({});
 
   const salvarEmails = async () => {
     setLoading(true);
