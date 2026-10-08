@@ -80,6 +80,34 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
   const v = Number(valor.replace(",", "."));
   const preview = (ant: number) => (modo === "fixo" ? ant + v : ant * (1 + v / 100));
 
+  const grupos = useMemo(() => {
+    if (!data) return [];
+    const q = busca.trim().toLowerCase();
+    const filtrados = data.itens.filter(
+      (it) => !q || it.nome.toLowerCase().includes(q) || it.codigo.toLowerCase().includes(q) || (it.tipo || "").toLowerCase().includes(q)
+    );
+    const map = new Map<string, Item[]>();
+    for (const it of filtrados) {
+      const t = (it.tipo || "").trim() || "Outros";
+      if (!map.has(t)) map.set(t, []);
+      map.get(t)!.push(it);
+    }
+    const rank = (t: string) => {
+      const l = t.toLowerCase();
+      if (l.startsWith("produto")) return 0;
+      if (l.startsWith("servi")) return 1;
+      if (l.startsWith("manuten")) return 2;
+      if (l.startsWith("comodato")) return 3;
+      return 4;
+    };
+    return [...map.entries()]
+      .map(([tipo, items]) => ({ tipo, items }))
+      .sort((a, b) => rank(a.tipo) - rank(b.tipo) || a.tipo.localeCompare(b.tipo));
+  }, [data, busca]);
+
+  const todosVisiveis = grupos.flatMap((g) => g.items.map((i) => i.codigo));
+  const todosSelecionados = todosVisiveis.length > 0 && todosVisiveis.every((c) => selected.includes(c));
+
   const criar = async () => {
     if (!selected.length || !v) return toast.error("Escolha os itens e informe o reajuste");
     setLoading(true);
