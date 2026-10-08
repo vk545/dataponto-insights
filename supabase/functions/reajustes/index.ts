@@ -22,8 +22,12 @@ async function readAll() {
   const [itens, reaj, cfg] = d.valueRanges.map((v: any) => v.values || []);
   const config: Record<string, string> = {};
   cfg.slice(1).forEach((r: string[]) => { if (r[0]) config[r[0].trim()] = (r[1] || "").trim(); });
-  return { itens, reaj, config };
+  return { itens, reaj, config, cfg };
 }
+
+const destinatarios = (config: Record<string, string>) =>
+  [...new Set([config["Email diretor"], config["Email comercial"]].filter(Boolean)
+    .flatMap((s) => s.split(/[,;\s]+/)).map((s) => s.trim()).filter((s) => s.includes("@")))];
 
 const nowBR = () => new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 const num = (s: string) => Number(String(s || "0").replace(/\./g, "").replace(",", ".")) || 0;
