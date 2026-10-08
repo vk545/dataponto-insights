@@ -22,8 +22,12 @@ async function readAll() {
   const [itens, reaj, cfg] = d.valueRanges.map((v: any) => v.values || []);
   const config: Record<string, string> = {};
   cfg.slice(1).forEach((r: string[]) => { if (r[0]) config[r[0].trim()] = (r[1] || "").trim(); });
-  return { itens, reaj, config };
+  return { itens, reaj, config, cfg };
 }
+
+const destinatarios = (config: Record<string, string>) =>
+  [...new Set([config["Email diretor"], config["Email comercial"]].filter(Boolean)
+    .flatMap((s) => s.split(/[,;\s]+/)).map((s) => s.trim()).filter((s) => s.includes("@")))];
 
 const nowBR = () => new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 const num = (s: string) => Number(String(s || "0").replace(/\./g, "").replace(",", ".")) || 0;
@@ -83,7 +87,7 @@ Deno.serve(async (req) => {
     }
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || "");
-    const { itens, reaj, config } = await readAll();
+    const { itens, reaj, config, cfg } = await readAll();
 
     // Public: recipient confirms receipt via email link
     if (action === "confirm") {
@@ -111,7 +115,7 @@ Deno.serve(async (req) => {
           percentual: r[6], data: r[7], vigencia: r[8], responsavel: r[9], obs: r[10], status: r[11],
           comunicado: r[12], recebidoPor: r[13], recebidoEm: r[14], implantadoEm: r[15],
         })).reverse(),
-        destinatarios: [config["Email diretor"], config["Email comercial"]].filter(Boolean),
+        destinatarios: destinatarios(config),
         sheetUrl: `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`,
       });
     }
@@ -124,7 +128,7 @@ Deno.serve(async (req) => {
       const obs = String(body.obs || "").slice(0, 500);
       if (!codigos.length || !isFinite(valor) || valor === 0) return json({ error: "Dados inválidos" }, 400);
       const lote = "R" + crypto.randomUUID().replace(/-/g, "").slice(0, 10).toUpperCase();
-      const dest = [config["Email diretor"], config["Email comercial"]].filter(Boolean).join(", ");
+      const dest = destinatarios(config).join(", ");
       const rows: string[][] = [];
       for (const c of codigos) {
         const it = itens.find((r: string[]) => r[0] === c);
@@ -141,7 +145,7 @@ Deno.serve(async (req) => {
       // Envia e-mail de aviso com link de confirmação para cada destinatário
       let emailEnviado = false;
       let emailErro = "";
-      const destList = [config["Email diretor"], config["Email comercial"]].filter(Boolean);
+      const destList = destinatarios(config);
       if (destList.length) {
         const linhas = rows.map((r) => `• ${r[3]} (${r[2]}): de ${fmtBRL(num(r[4]))} para ${fmtBRL(num(r[5]))} (${r[6]})`).join("\n");
         try {
@@ -150,8 +154,8 @@ Deno.serve(async (req) => {
             const linhasHtml = rows.map((r) => `<li>${r[3]} (${r[2]}): de ${fmtBRL(num(r[4]))} para <b>${fmtBRL(num(r[5]))}</b> (${r[6]})</li>`).join("");
             await sendEmail(
               d,
-              `Reajuste de preços ${lote} — confirmação necessária`,
-              `<div style="font-family:Arial,sans-serif;font-size:15px;color:#222"><p>Olá!</p><p>Um novo reajuste de preços foi registrado:</p><ul>${linhasHtml}</ul><p>Vigência: ${vigencia || "a definir"}<br>Responsável: ${config["Responsável"] || "-"}${obs ? `<br>Observações: ${obs}` : ""}</p><p style="margin:24px 0"><a href="${link}" style="background:#0e7490;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">✅ Confirmar recebimento</a></p><p>— DATAPONTO</p></div>`,
+              `ATENÇÃO - REAJUSTE FIRMINO`,
+              `<div style="font-family:Arial,sans-serif;font-size:15px;color:#222"><h2 style="color:#b91c1c;margin:0 0 12px">ATENÇÃO - REAJUSTE FIRMINO</h2><p>Um novo reajuste de preços foi registrado:</p><ul>${linhasHtml}</ul><p>Vigência: ${vigencia || "a definir"}<br>Responsável: ${config["Responsável"] || "-"}${obs ? `<br>Observações: ${obs.replace(/</g, "&lt;")}` : ""}</p><p style="margin:24px 0"><a href="${link}" style="background:#0e7490;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">✅ Confirmar recebimento</a></p><p>— DATAPONTO</p></div>`,
             );
           }
           emailEnviado = true;
@@ -175,6 +179,26 @@ Deno.serve(async (req) => {
       ];
       if (itemIdx > 0) data.push({ range: `Itens!D${itemIdx + 1}`, values: [[r[5]]] });
       await gs(`/values:batchUpdate`, { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
+      return json({ ok: true });
+    }
+
+    if (action === "setEmails") {
+      const list: string[] = Array.isArray(body.emails) ? body.emails.map((e: unknown) => String(e).trim().slice(0, 200)) : [];
+      const valid = [...new Set(list.filter((e) => /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/.test(e)))];
+      if (!valid.length) return json({ error: "Informe pelo menos um e-mail válido" }, 400);
+      const idx = (k: string) => cfg.findIndex((r: string[], i: number) => i > 0 && (r[0] || "").trim() === k);
+      const di = idx("Email diretor"), ci = idx("Email comercial");
+      const data: any[] = [];
+      if (di > 0) data.push({ range: `Config!B${di + 1}`, values: [[valid.join(", ")]] });
+      else data.push({ range: `Config!A${cfg.length + 1}:B${cfg.length + 1}`, values: [["Email diretor", valid.join(", ")]] });
+      if (ci > 0) data.push({ range: `Config!B${ci + 1}`, values: [[""]] });
+      await gs(`/values:batchUpdate`, { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
+      return json({ ok: true, emails: valid });
+    }
+
+    if (action === "reset") {
+      if (body.confirm !== "APAGAR") return json({ error: "Confirmação necessária" }, 400);
+      await gs(`/values/Reajustes!A2:P:clear`, { method: "POST", body: "{}" });
       return json({ ok: true });
     }
 
