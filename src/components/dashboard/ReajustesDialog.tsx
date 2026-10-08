@@ -175,27 +175,84 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
               </TabsList>
 
               <TabsContent value="novo" className="space-y-4">
-                <div className="rounded-xl border border-border divide-y divide-border">
-                  {data.itens.map((it) => {
-                    const on = selected.includes(it.codigo);
-                    return (
-                      <label key={it.codigo} className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/50">
-                        <Checkbox checked={on} onCheckedChange={(c) => setSelected((s) => c ? [...s, it.codigo] : s.filter((x) => x !== it.codigo))} />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{it.nome}</p>
-                          <p className="text-xs text-muted-foreground">{it.codigo} · {it.tipo}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold">{brl(it.valor)}</p>
-                          {on && v ? <p className="text-xs text-success font-semibold">→ {brl(preview(it.valor))}</p> : null}
-                        </div>
-                      </label>
-                    );
-                  })}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    placeholder="🔍 Procurar produto ou serviço..."
+                    className="pl-10 h-11 text-base"
+                  />
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelected(selected.length === data.itens.length ? [] : data.itens.map((i) => i.codigo))}>
-                  {selected.length === data.itens.length ? "Desmarcar todos" : "Selecionar todos"}
-                </Button>
+
+                {grupos.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Nenhum item encontrado{busca ? ` para "${busca}"` : ""}.
+                  </p>
+                )}
+
+                {grupos.map((g) => {
+                  const cods = g.items.map((i) => i.codigo);
+                  const todosOn = cods.every((c) => selected.includes(c));
+                  const aberto = abertos[g.tipo] !== false;
+                  return (
+                    <div key={g.tipo} className="rounded-xl border border-border overflow-hidden">
+                      <div className="flex items-center gap-3 bg-muted/60 px-3 py-2 sticky top-0 z-10">
+                        <Checkbox
+                          checked={todosOn}
+                          onCheckedChange={(c) =>
+                            setSelected((s) => (c ? [...new Set([...s, ...cods])] : s.filter((x) => !cods.includes(x))))
+                          }
+                          aria-label={`Selecionar todos de ${g.tipo}`}
+                        />
+                        <button
+                          type="button"
+                          className="flex-1 flex items-center gap-2 text-left min-w-0"
+                          onClick={() => setAbertos((a) => ({ ...a, [g.tipo]: !aberto }))}
+                        >
+                          <span className="font-semibold truncate">{g.tipo}</span>
+                          <Badge variant="secondary" className="text-xs shrink-0">{g.items.length}</Badge>
+                          <ChevronDown className={`ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform ${aberto ? "" : "-rotate-90"}`} />
+                        </button>
+                      </div>
+                      {aberto && (
+                        <div className="divide-y divide-border">
+                          {g.items.map((it) => {
+                            const on = selected.includes(it.codigo);
+                            return (
+                              <label key={it.codigo} className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/50">
+                                <Checkbox checked={on} onCheckedChange={(c) => setSelected((s) => c ? [...s, it.codigo] : s.filter((x) => x !== it.codigo))} />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium truncate">{it.nome}</p>
+                                  <p className="text-xs text-muted-foreground">{it.codigo}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-semibold">{brl(it.valor)}</p>
+                                  {on && v ? <p className="text-xs text-success font-semibold">→ {brl(preview(it.valor))}</p> : null}
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {todosVisiveis.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setSelected((s) =>
+                        todosSelecionados ? s.filter((x) => !todosVisiveis.includes(x)) : [...new Set([...s, ...todosVisiveis])]
+                      )
+                    }
+                  >
+                    {todosSelecionados ? "Desmarcar os visíveis" : "Selecionar os visíveis"}
+                  </Button>
+                )}
+
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
