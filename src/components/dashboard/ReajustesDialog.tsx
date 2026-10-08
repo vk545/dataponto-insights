@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Lock, ExternalLink, RefreshCw, Check, Mail } from "lucide-react";
+import { ExternalLink, RefreshCw, Check, Mail, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Item { codigo: string; nome: string; tipo: string; valor: number }
@@ -44,6 +44,25 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
   const [valor, setValor] = useState("");
   const [vigencia, setVigencia] = useState(() => new Date().toISOString().slice(0, 10));
   const [obs, setObs] = useState("");
+  const [editEmails, setEditEmails] = useState(false);
+  const [emailsTxt, setEmailsTxt] = useState("");
+
+  const salvarEmails = async () => {
+    setLoading(true);
+    try {
+      await call({ action: "setEmails", emails: emailsTxt.split(/[,;\s]+/).filter(Boolean) });
+      toast.success("E-mails atualizados");
+      setEditEmails(false);
+      await load();
+    } catch (e: any) { toast.error(e.message); setLoading(false); }
+  };
+
+  const resetar = async () => {
+    if (!window.confirm("Apagar TODO o histórico de reajustes? Os preços atuais dos itens não mudam.")) return;
+    setLoading(true);
+    try { await call({ action: "reset", confirm: "APAGAR" }); toast.success("Histórico apagado"); await load(); }
+    catch (e: any) { toast.error(e.message); setLoading(false); }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -94,6 +113,9 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Mail className="h-4 w-4" /> Avisos para: <strong className="text-foreground">{data.destinatarios.join(", ") || "—"}</strong>
+                <Button variant="ghost" size="sm" onClick={() => { setEmailsTxt(data.destinatarios.join(", ")); setEditEmails(!editEmails); }}>
+                  <Pencil className="h-4 w-4 mr-1" /> Mudar
+                </Button>
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => load()} disabled={loading}>
@@ -104,6 +126,17 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
                 </Button>
               </div>
             </div>
+
+            {editEmails && (
+              <div className="rounded-xl border border-border p-3 space-y-2">
+                <Label>E-mails que recebem o aviso (separe por vírgula)</Label>
+                <Input value={emailsTxt} onChange={(e) => setEmailsTxt(e.target.value)} placeholder="nome@empresa.com.br, outro@empresa.com.br" />
+                <div className="flex gap-2">
+                  <Button onClick={salvarEmails} disabled={loading}>Salvar e-mails</Button>
+                  <Button variant="outline" onClick={() => setEditEmails(false)}>Cancelar</Button>
+                </div>
+              </div>
+            )}
 
             <Tabs defaultValue="novo">
               <TabsList className="grid w-full grid-cols-2">
@@ -161,6 +194,13 @@ export function ReajustesDialog({ open, onOpenChange }: { open: boolean; onOpenC
               </TabsContent>
 
               <TabsContent value="historico" className="space-y-2">
+                {data.reajustes.length > 0 && (
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" className="text-destructive" onClick={resetar} disabled={loading}>
+                      <Trash2 className="h-4 w-4 mr-1" /> Apagar histórico
+                    </Button>
+                  </div>
+                )}
                 {data.reajustes.length === 0 && <p className="text-sm text-muted-foreground py-6 text-center">Nenhum reajuste ainda.</p>}
                 {data.reajustes.map((r) => (
                   <div key={r.row} className="rounded-xl border border-border p-3 flex flex-wrap items-center gap-3">
