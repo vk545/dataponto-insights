@@ -18,8 +18,8 @@ async function gs(path: string, init: RequestInit = {}) {
 }
 
 async function readAll() {
-  const d = await gs(`/values:batchGet?ranges=Itens!A:D&ranges=Reajustes!A:P&ranges=Config!A:B`);
-  const [itens, reaj, cfg] = d.valueRanges.map((v: any) => v.values || []);
+  const d = await gs(`/values:batchGet?ranges=Itens!A:D&ranges=Reajustes!A:P&ranges=Config!A:B&valueRenderOption=UNFORMATTED_VALUE`);
+  const [itens, reaj, cfg] = d.valueRanges.map((v: any) => (v.values || []).map((r: any[]) => r.map((c, j) => (typeof c === "number" && !(j >= 4 && j <= 5) && !(j === 3) ? String(c) : c))));
   const config: Record<string, string> = {};
   cfg.slice(1).forEach((r: string[]) => { if (r[0]) config[r[0].trim()] = (r[1] || "").trim(); });
   return { itens, reaj, config, cfg };
@@ -30,7 +30,14 @@ const destinatarios = (config: Record<string, string>) =>
     .flatMap((s) => s.split(/[,;\s]+/)).map((s) => s.trim()).filter((s) => s.includes("@")))];
 
 const nowBR = () => new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
-const num = (s: string) => Number(String(s || "0").replace(/\./g, "").replace(",", ".")) || 0;
+const num = (v: unknown) => {
+  if (typeof v === "number") return v;
+  let s = String(v ?? "").replace(/[^\d,.-]/g, "");
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  return Number(s) || 0;
+};
+const RESP = "Firmino";
+const semTeste = (s: string) => s.replace(/\(?\s*\bteste\b[^)\n]*\)?/gi, "").replace(/\s{2,}/g, " ").trim();
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -136,8 +143,8 @@ Deno.serve(async (req) => {
         const ant = num(it[3]);
         const novo = Math.round((modo === "fixo" ? ant + valor : ant * (1 + valor / 100)) * 100) / 100;
         const pct = ant ? ((novo - ant) / ant) * 100 : 0;
-        rows.push([lote, codigos.length > 1 ? "Reajuste em lote" : "Reajuste individual", c, it[1], String(ant), String(novo),
-          pct.toFixed(2).replace(".", ",") + "%", nowBR(), vigencia, config["Responsável"] || "", obs, "Pendente", dest]);
+        rows.push([lote, codigos.length > 1 ? "Reajuste em lote" : "Reajuste individual", c, it[1], ant as any, novo as any,
+          pct.toFixed(2).replace(".", ",") + "%", nowBR(), vigencia, RESP, obs, "Pendente", dest]);
       }
       if (!rows.length) return json({ error: "Nenhum item válido" }, 400);
       await gs(`/values/Reajustes!A:P:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, { method: "POST", body: JSON.stringify({ values: rows }) });
@@ -155,7 +162,7 @@ Deno.serve(async (req) => {
             await sendEmail(
               d,
               `ATENÇÃO - REAJUSTE FIRMINO`,
-              `<div style="font-family:Arial,sans-serif;font-size:15px;color:#222"><h2 style="color:#b91c1c;margin:0 0 12px">ATENÇÃO - REAJUSTE FIRMINO</h2><p>Um novo reajuste de preços foi registrado:</p><ul>${linhasHtml}</ul><p>Vigência: ${vigencia || "a definir"}<br>Responsável: ${config["Responsável"] || "-"}${obs ? `<br>Observações: ${obs.replace(/</g, "&lt;")}` : ""}</p><p style="margin:24px 0"><a href="${link}" style="background:#0e7490;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">✅ Confirmar recebimento</a></p><p>— DATAPONTO</p></div>`,
+              `<div style="font-family:Arial,sans-serif;font-size:15px;color:#222"><h2 style="color:#b91c1c;margin:0 0 12px">ATENÇÃO - REAJUSTE FIRMINO</h2><p>Um novo reajuste de preços foi registrado:</p><ul>${linhasHtml}</ul><p>Vigência: ${vigencia || "a definir"}<br>Responsável: ${RESP}${semTeste(obs) ? `<br>Observações: ${semTeste(obs).replace(/</g, "&lt;")}` : ""}</p><p style="margin:24px 0"><a href="${link}" style="background:#0e7490;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">✅ Confirmar recebimento</a></p><p>— DATAPONTO</p></div>`,
             );
           }
           emailEnviado = true;
@@ -177,7 +184,7 @@ Deno.serve(async (req) => {
         { range: `Reajustes!L${row}`, values: [["Implantado"]] },
         { range: `Reajustes!P${row}`, values: [[nowBR()]] },
       ];
-      if (itemIdx > 0) data.push({ range: `Itens!D${itemIdx + 1}`, values: [[r[5]]] });
+      if (itemIdx > 0) data.push({ range: `Itens!D${itemIdx + 1}`, values: [[num(r[5])]] });
       await gs(`/values:batchUpdate`, { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
       return json({ ok: true });
     }
