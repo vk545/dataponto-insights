@@ -54,6 +54,7 @@ async function sendEmail(to: string, subject: string, body: string) {
   const mk = Deno.env.get("GOOGLE_MAIL_API_KEY");
   if (!lk || !mk) throw new Error("Credenciais de e-mail ausentes");
   const raw = [
+    `From: ${mimeHeader("DATAPONTO e Rep Relógios")} <avisofir4@gmail.com>`,
     `To: ${to}`,
     `Subject: ${mimeHeader(subject)}`,
     "MIME-Version: 1.0",
@@ -162,7 +163,7 @@ Deno.serve(async (req) => {
             await sendEmail(
               d,
               `ATENÇÃO - REAJUSTE FIRMINO`,
-              `<div style="font-family:Arial,sans-serif;font-size:15px;color:#222"><h2 style="color:#b91c1c;margin:0 0 12px">ATENÇÃO - REAJUSTE FIRMINO</h2><p>Um novo reajuste de preços foi registrado:</p><ul>${linhasHtml}</ul><p>Vigência: ${vigencia || "a definir"}<br>Responsável: ${RESP}${semTeste(obs) ? `<br>Observações: ${semTeste(obs).replace(/</g, "&lt;")}` : ""}</p><p style="margin:24px 0"><a href="${link}" style="background:#0e7490;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">✅ Confirmar recebimento</a></p><p>— DATAPONTO</p></div>`,
+              `<div style="font-family:Arial,sans-serif;font-size:15px;color:#222"><h2 style="color:#b91c1c;margin:0 0 12px">ATENÇÃO - REAJUSTE FIRMINO</h2><p style="font-weight:bold">DATAPONTO e REP RELÓGIOS</p><p>Um novo reajuste de preços foi registrado:</p><ul>${linhasHtml}</ul><p>Vigência: ${vigencia || "a definir"}<br>Responsável: ${RESP}${semTeste(obs) ? `<br>Observações: ${semTeste(obs).replace(/</g, "&lt;")}` : ""}</p><p style="margin:24px 0"><a href="${link}" style="background:#0e7490;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">✅ Confirmar recebimento</a></p><p>— Firmino<br><b>DATAPONTO</b> • <b>REP RELÓGIOS</b></p></div>`,
             );
           }
           emailEnviado = true;
